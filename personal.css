@@ -1,0 +1,80 @@
+/* personal.css */
+
+/* Personal Profile Section Styling */
+.profile {
+    padding: 4.5rem 0 1.5rem;
+    background: var(--text-color);
+    color: var(--bg-color);
+}
+
+.container {
+    max-width: 968px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 4%;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-card {
+    background: var(--bg-color);
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+.profile-header {
+    margin-bottom: 1.5rem;
+}
+
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.profile-email {
+    font-size: 1rem;
+    color: var(--main-color);
+}
+
+.profile-body {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.profile-body h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: red; /* Change the color to red */
+}
+
+.profile-body p {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: black; /* Change the color to black */
+}
+
+.profile-footer .btn {
+    display: block;
+    margin: 0.5rem 0;
+    text-align: center;
+}
+
+@media (max-width: 774px) {
+    .container {
+        padding: 12px 4%;
+    }
+}
