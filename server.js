@@ -175,6 +175,7 @@ app.get('/membership', (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Membership details not found' });
         }
+        
 
         // Send membership details as JSON response
         res.json(results[0]);
