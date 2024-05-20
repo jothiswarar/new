@@ -10,8 +10,8 @@ const port = 3000;
 const pool = mysql.createPool({
     connectionLimit: 10, // adjust as needed
     host: 'localhost',
-    user: 'jothis',
-    password: '',
+    user: 'root',
+    password: 'root',
     database: 'moviemate'
 });
 var cust_id;
@@ -107,6 +107,7 @@ app.post('/submit', (req, res) => {
 // Handle sign in
 app.post('/signin', (req, res) => {
     const { emailOrPhone, password } = req.body;
+    console.log("sign in");
 
     // Get a connection from the pool
     pool.getConnection((err, connection) => {
