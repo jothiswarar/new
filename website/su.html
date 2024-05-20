@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="su.css">
+</head>
+<body>
+    <div class="form-wrapper">
+        <h2>Sign Up</h2>
+        <form action="/submit" method="POST" id="signupForm">
+            <div class="form-control">
+                <label for="membershipType">Membership Type:</label>
+                <select id="membershipType" name="membershipType" onchange="showAdditionalFields()">
+                    <option value="vip">VIP</option>
+                    <option value="student">Student</option>
+                    <option value="family">Family</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <input type="number" id="duration" name="duration" required>
+                <label for="duration">Duration (in days):</label>
+            </div>
+            <div class="form-control">
+                <input type="text" id="Name" name="Name" required>
+                <label >Name:</label>
+            </div>
+            <div class="form-control">
+                <input type="email" id="email" name="email" required>
+                <label for="email">Email:</label>
+            </div>
+            <div class="form-control">
+                <input type="tel" id="phone" name="phone" required>
+                <label for="phone">Phone:</label>
+            </div>
+            <div class ="form-control" id="additionalFields" >
+                <!-- Additional fields will be dynamically added here -->
+            </div>
+            <div class="form-control">
+                <input type="password" id="password" name="password" required>
+                <label for="password">Password:</label>
+            </div>
+            <div class="form-control">
+                <input type="password" id="confirmpassword" name="confirmpassword" required>
+                <label for="confirmpassword">Confirm Password:</label>
+            </div>
+            <button type="submit">Sign Up</button>
+        </form>
+    </div>
+
+    <script src="su.js"></script>
+
+</body>
+</html>
