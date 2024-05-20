@@ -1,14 +1,31 @@
-/**
-Responsive HTML Table With Pure CSS - Web Design/UI Design
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('http://localhost:3000/cart')
+      .then(response => response.json())
+      .then(data => {
+          const tableBody = document.getElementById('tableBody');
+          data.forEach(item => {
+              const row = tableBody.insertRow();
+              row.insertCell().textContent = item.copy_id;
+              row.insertCell().textContent = item.title;
+              row.insertCell().textContent = item.lang;
+              row.insertCell().textContent = item.availability;
+              row.insertCell().textContent = item.genre;
+              row.insertCell().textContent = item.price;
+              const cartCell = row.insertCell();
+              const addButton = document.createElement('button');
+              addButton.textContent = 'Add';
+              addButton.classList.add('add-button');
+              addButton.dataset.copyId = item.copy_id; // Store the copy_id in a data attribute
+              addButton.addEventListener('click', () => addToCart(item.copy_id));
+              cartCell.appendChild(addButton);
+          });
 
-Code written by:
-👨🏻‍⚕️ @Coding Design (Jeet Saru)
-
-> You can do whatever you want with the code. However if you love my content, you can **SUBSCRIBED** my YouTube Channel.
-
-🌎link: www.youtube.com/codingdesign 
-*/
-
+          // Add search functionality after rows are added
+          addSearchFunctionality();
+          addSortingFunctionality();
+      })
+      .catch(error => console.error('Error fetching data:', error));
+});
 const search = document.querySelector('.input-group input'),
     table_rows = document.querySelectorAll('tbody tr'),
     table_headings = document.querySelectorAll('thead th');
@@ -97,95 +114,6 @@ const toPDF = function (customers_table) {
 pdf_btn.onclick = () => {
     toPDF(customers_table);
 }
-
-// 5. Converting HTML table to CSV File
-
-const csv_btn = document.querySelector('#toCSV');
-
-const toCSV = function (table) {
-    // Code For SIMPLE TABLE
-    // const t_rows = table.querySelectorAll('tr');
-    // return [...t_rows].map(row => {
-    //     const cells = row.querySelectorAll('th, td');
-    //     return [...cells].map(cell => cell.textContent.trim()).join(',');
-    // }).join('\n');
-
-    const t_heads = table.querySelectorAll('th'),
-        tbody_rows = table.querySelectorAll('tbody tr');
-
-    const headings = [...t_heads].map(head => {
-        let actual_head = head.textContent.trim().split(' ');
-        return actual_head.splice(0, actual_head.length - 1).join(' ').toLowerCase();
-    }).join(',') + ',' + 'image name';
-
-    const table_data = [...tbody_rows].map(row => {
-        const cells = row.querySelectorAll('td'),
-            img = decodeURIComponent(row.querySelector('img').src),
-            data_without_img = [...cells].map(cell => cell.textContent.replace(/,/g, ".").trim()).join(',');
-
-        return data_without_img + ',' + img;
-    }).join('\n');
-
-    return headings + '\n' + table_data;
-}
-
-csv_btn.onclick = () => {
-    const csv = toCSV(customers_table);
-    downloadFile(csv, 'csv', 'customer orders');
-}
-
-// 6. Converting HTML table to EXCEL File
-
-const excel_btn = document.querySelector('#toEXCEL');
-
-const toExcel = function (table) {
-    // Code For SIMPLE TABLE
-    // const t_rows = table.querySelectorAll('tr');
-    // return [...t_rows].map(row => {
-    //     const cells = row.querySelectorAll('th, td');
-    //     return [...cells].map(cell => cell.textContent.trim()).join('\t');
-    // }).join('\n');
-
-    const t_heads = table.querySelectorAll('th'),
-        tbody_rows = table.querySelectorAll('tbody tr');
-
-    const headings = [...t_heads].map(head => {
-        let actual_head = head.textContent.trim().split(' ');
-        return actual_head.splice(0, actual_head.length - 1).join(' ').toLowerCase();
-    }).join('\t') + '\t' + 'image name';
-
-    const table_data = [...tbody_rows].map(row => {
-        const cells = row.querySelectorAll('td'),
-            img = decodeURIComponent(row.querySelector('img').src),
-            data_without_img = [...cells].map(cell => cell.textContent.trim()).join('\t');
-
-        return data_without_img + '\t' + img;
-    }).join('\n');
-
-    return headings + '\n' + table_data;
-}
-
-excel_btn.onclick = () => {
-    const excel = toExcel(customers_table);
-    downloadFile(excel, 'excel');
-}
-
-const downloadFile = function (data, fileType, fileName = '') {
-    const a = document.createElement('a');
-    a.download = fileName;
-    const mime_types = {
-        'json': 'application/json',
-        'csv': 'text/csv',
-        'excel': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    }
-    a.href = `
-        data:${mime_types[fileType]};charset=utf-8,${encodeURIComponent(data)}
-    `;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-}
-
 
 /*cart file */
 

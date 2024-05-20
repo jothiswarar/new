@@ -24,6 +24,52 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, "website", "index.html"));
 });
+app.get('/cart', (req, res) => {
+    pool.query('SELECT * FROM copy c,movie m,genre ca where c.movie_id=m.movie_id and m.movie_id=ca.movie_id and c.cart_id= ?',[cust_id], (error, results) => {
+        if (error) {
+            res.status(500).json({ error });
+        } else {
+            res.json(results);
+        }
+        console.log(results[0]);
+    });
+});
+app.get('/movies', (req, res) => {
+    pool.query('SELECT * FROM copy c,movie m,genre ca where c.movie_id=m.movie_id and m.movie_id=ca.movie_id', (error, results) => {
+        if (error) {
+            res.status(500).json({ error });
+        } else {
+            res.json(results);
+        }
+        console.log(results[0]);
+    });
+});
+// Route to add a movie to the cart
+app.post('/add', (req, res) => {
+    const { copy_id } = req.body;
+
+    // Perform any necessary validation on the copy_id
+
+    // Insert the copy_id into the cart table (or perform any other action as needed)
+   pool.query("insert into cart (no_of_items,cust_id) values ")
+    pool.query("update copy set cart_id =(?),cust_id=(?) where copy_id =(?);", [cust_id,cust_id,copy_id], (error, results) => {
+        if (error) {
+            console.error('Error adding movie to cart:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+        // Send a success response
+        pool.query("update cart set no_of_items=no+of_itenms+1 where cust_id=?", [cust_id],(err,result) => {
+            if(err){
+                console.error(err);
+            }
+            else{
+                res.status(200).json({ message: 'Movie added to cart successfully' });
+            }
+        });
+        
+    });
+});
 
 app.post('/submit', (req, res) => {
     const { Name, email, phone, password, confirmpassword, membershipType, duration, vipType, institutionName, familyMembers } = req.body;
@@ -99,6 +145,16 @@ app.post('/submit', (req, res) => {
                     res.redirect('/index.html'); // Redirect to index.html after successful sign up
                 }
             });
+            pool.query('insert into cart(cart_id,no_of_items,cust_id) values(?,0,?)',[cust_id,cust_id],(err,result) => {
+                if(err){
+
+                    console.error(err);
+                }
+                else{
+                    console.log("cart inserted");
+                    res.redirect('/index.html'); 
+                }
+            });
         });
     });
 });
@@ -137,6 +193,7 @@ app.post('/signin', (req, res) => {
             if (user.password !== password) {
                 return res.status(401).send('Incorrect password');
             }
+            console.log("sign in sucessful");
 
             // Redirect to index.html on successful authentication
             res.redirect('/index.html');

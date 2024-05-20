@@ -1,89 +1,109 @@
-const mysql = require('mysql');
-
-const pool = mysql.createPool({
-    connectionLimit: 10,
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'moviemate'
-});
-
 document.addEventListener('DOMContentLoaded', () => {
-    pool.query('SELECT * FROM copy', (error, results, fields) => {
-        if (error) {
-            console.error('Error fetching data:', error);
-        } else {
+    fetch('http://localhost:3000/movies')
+        .then(response => response.json())
+        .then(data => {
             const tableBody = document.getElementById('tableBody');
-            results.forEach(item => {
+            data.forEach(item => {
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = item.copy_id;
+                row.insertCell().textContent = item.title;
                 row.insertCell().textContent = item.lang;
-                row.insertCell().textContent = item.price;
                 row.insertCell().textContent = item.availability;
                 row.insertCell().textContent = item.genre;
+                row.insertCell().textContent = item.price;
                 const cartCell = row.insertCell();
                 const addButton = document.createElement('button');
                 addButton.textContent = 'Add';
                 addButton.classList.add('add-button');
+                addButton.dataset.copyId = item.copy_id; // Store the copy_id in a data attribute
+                addButton.addEventListener('click', () => addToCart(item.copy_id));
                 cartCell.appendChild(addButton);
             });
-        }
-    });
+
+            // Add search functionality after rows are added
+            addSearchFunctionality();
+            addSortingFunctionality();
+        })
+        .catch(error => console.error('Error fetching data:', error));
 });
 
-const search = document.querySelector('.input-group input'),
-    table_rows = document.querySelectorAll('tbody tr'),
-    table_headings = document.querySelectorAll('thead th');
+function addSearchFunctionality() {
+    const search = document.querySelector('.input-group input');
+    const tableRows = document.querySelectorAll('tbody tr');
 
-search.addEventListener('input', searchTable);
+    search.addEventListener('input', () => {
+        const searchData = search.value.toLowerCase();
+        tableRows.forEach((row, i) => {
+            const tableData = row.textContent.toLowerCase();
+            row.classList.toggle('hide', tableData.indexOf(searchData) < 0);
+            row.style.setProperty('--delay', i / 25 + 's');
+        });
 
-function searchTable() {
-    table_rows.forEach((row, i) => {
-        let table_data = row.textContent.toLowerCase(),
-            search_data = search.value.toLowerCase();
-
-        row.classList.toggle('hide', table_data.indexOf(search_data) < 0);
-        row.style.setProperty('--delay', i / 25 + 's');
-    })
-
-    document.querySelectorAll('tbody tr:not(.hide)').forEach((visible_row, i) => {
-        visible_row.style.backgroundColor = (i % 2 == 0) ? 'transparent' : '#0000000b';
+        document.querySelectorAll('tbody tr:not(.hide)').forEach((visibleRow, i) => {
+            visibleRow.style.backgroundColor = (i % 2 === 0) ? 'transparent' : '#0000000b';
+        });
     });
 }
 
-table_headings.forEach((head, i) => {
-    let sort_asc = true;
-    head.onclick = () => {
-        table_headings.forEach(head => head.classList.remove('active'));
-        head.classList.add('active');
+function addSortingFunctionality() {
+    const tableHeadings = document.querySelectorAll('thead th');
+    const tableRows = document.querySelectorAll('tbody tr');
 
-        document.querySelectorAll('td').forEach(td => td.classList.remove('active'));
-        table_rows.forEach(row => {
-            row.querySelectorAll('td')[i].classList.add('active');
-        })
+    tableHeadings.forEach((head, i) => {
+        let sortAsc = true;
+        head.addEventListener('click', () => {
+            tableHeadings.forEach(head => head.classList.remove('active'));
+            head.classList.add('active');
 
-        head.classList.toggle('asc', sort_asc);
-        sort_asc = head.classList.contains('asc') ? false : true;
+            document.querySelectorAll('td').forEach(td => td.classList.remove('active'));
+            tableRows.forEach(row => {
+                row.querySelectorAll('td')[i].classList.add('active');
+            });
 
-        sortTable(i, sort_asc);
-    }
-})
+            head.classList.toggle('asc', sortAsc);
+            sortAsc = !sortAsc;
 
-function sortTable(column, sort_asc) {
-    [...table_rows].sort((a, b) => {
-        let first_row = a.querySelectorAll('td')[column].textContent.trim();
-        let second_row = b.querySelectorAll('td')[column].textContent.trim();
-
-        if (!isNaN(first_row) && !isNaN(second_row)) {
-            first_row = parseFloat(first_row);
-            second_row = parseFloat(second_row);
-        } else {
-            first_row = first_row.toLowerCase();
-            second_row = second_row.toLowerCase();
-        }
-
-        return sort_asc ? (first_row > second_row ? 1 : -1) : (first_row < second_row ? 1 : -1);
-    })
-    .forEach(sorted_row => document.querySelector('tbody').appendChild(sorted_row));
+            sortTable(i, sortAsc);
+        });
+    });
 }
 
+function sortTable(column, sortAsc) {
+    const tableRows = document.querySelectorAll('tbody tr');
+    const sortedRows = [...tableRows].sort((a, b) => {
+        let firstRow = a.querySelectorAll('td')[column].textContent.trim();
+        let secondRow = b.querySelectorAll('td')[column].textContent.trim();
+
+        // If both values are numeric strings, parse them as numbers for comparison
+        if (!isNaN(firstRow) && !isNaN(secondRow)) {
+            firstRow = parseFloat(firstRow);
+            secondRow = parseFloat(secondRow);
+        } else {
+            // If one or both values are not numeric strings, compare them as strings
+            firstRow = firstRow.toLowerCase();
+            secondRow = secondRow.toLowerCase();
+        }
+
+        // Perform comparison based on sort order
+        return sortAsc ? (firstRow > secondRow ? 1 : -1) : (firstRow < secondRow ? 1 : -1);
+    });
+
+    sortedRows.forEach(sortedRow => document.querySelector('tbody').appendChild(sortedRow));
+}
+function addToCart(copyId) {
+    fetch('http://localhost:3000/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ copy_id: copyId }),
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Movie added to cart!');
+        } else {
+            alert('Failed to add movie to cart.');
+        }
+    })
+    .catch(error => console.error('Error adding movie to cart:', error));
+}

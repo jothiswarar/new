@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,8 +10,9 @@
 
     <!-- box icons  -->
     <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- styles  -->
-    <link rel="stylesheet" href="table.css">
+    <link rel="stylesheet" href="mc.css">
 </head>
 
 <body>
@@ -22,7 +24,6 @@
             <!-- CART ICON  -->
             <a href="table.html">
                 <i class="bx bx-shopping-bag" id="cart-icon"></i>
-                <span class="tooltip">View Cart</span>
             </a>
         
             <ul class="navbar">
@@ -33,25 +34,6 @@
             </ul>
 
             <!-- CART  -->
-            <div class="cart">
-                <h2 class="cart-title">Your Cart</h2>
-
-                <!-- CONTENT  -->
-                <div class="cart-content">
-
-
-                </div>
-
-                <!-- TOTAL   -->
-                <div class="total">
-                    <div class="total-title">Total</div>
-                    <div class="total-price">$0</div>
-                </div>
-                <!-- BUY BUTTON  -->
-                <button type="button" class="btn-buy">Buy Now</button>
-                <!-- CART CLOSE  -->
-                <i class='bx bx-x' id="cart-close"></i>
-            </div>
         </div>
     </header>
 
@@ -64,8 +46,20 @@
                 <h1 style="color: red;">Movies</h1>
                 <div class="input-group">
                     <input type="search" placeholder="Search Movie...">
-                    <img src="img/search.png" alt="">
+                    <span style="font-size: 20px; color: red;">🔍</span>
                 </div>
+            </div>
+            <div class="export__file">
+                    
+                        <label for="export-file" class="export__file-btn" title="Export File">
+                            <i class="fa-solid fa-file-export" style="color: red; margin-top: 9px; margin-left: 10px; font-size: 1.5rem;"></i>
+                        </label>
+
+                    <input type="checkbox" id="export-file">
+                    <div class="export__file-options">
+                        <label>Export As &nbsp; &#10140;</label>
+                        <label for="export-file" id="toPDF">PDF <img src="./img/pdf.jpg" alt=""></label>
+                    </div>
             </div>
             </section>
             <section class="table__body">
@@ -81,8 +75,8 @@
                             <th> Cart <span class="icon-arrow">&UpArrow;</span></th>
                         </tr>
                     </thead>
-                    <tbody>
-                       
+                    <tbody id="tableBody">
+                        <!-- Dynamic rows will be added here -->
                     </tbody>
                 </table>
             </section>
@@ -91,10 +85,7 @@
 
     <!-- link js  -->
     <!--<script src="cart.js"></script>-->
-    <script src="table.js"></script>
+    <script src="mc.js"></script>
 </body>
 
 </html>
-
-
-
