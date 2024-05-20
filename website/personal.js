@@ -1,12 +1,4 @@
-// Function to fetch and display customer details
-const mysql = require('mysql');
-const pool = mysql.createPool({
-    connectionLimit: 10, // adjust as needed
-    host: 'localhost',
-    user: 'jothis',
-    password: '',
-    database: 'moviemate'
-});
+
 function fetchCustomerDetails() {
     fetch('/customer') // Endpoint to fetch customer details from the server
         .then(response => response.json())
@@ -28,7 +20,16 @@ function fetchMembershipDetails() {
     fetch('/membership') // Endpoint to fetch membership details from the server
         .then(response => response.json())
         .then(data => {
-            // Display membership details
+            document.getElementById('membershipDuration').textContent = data.duration;
+            mysql=require('mysql');
+            const pool = mysql.createPool({
+                connectionLimit: 10, // adjust as needed
+                host: 'localhost',
+                user: 'root',
+                password: 'root',
+                database: 'moviemate'
+            });
+            console.log("pool created");
             if (pool.query('select * from membership_customer m where exists (select * from vip v where v.member_id =m.member_id);'), (err, r) => {
                 if (r.length != 0) {
                     document.getElementById('membershipType').textContent = "VIP";
@@ -48,7 +49,6 @@ function fetchMembershipDetails() {
                 document.getElementById('membershipDuration').textContent = "0";
             }
 
-            document.getElementById('membershipDuration').textContent = data.duration;
         })
         .catch(error => console.error('Error fetching membership details:', error));
 }
