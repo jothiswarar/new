@@ -28,6 +28,7 @@
     bottom: 125%; /* Position the tooltip above the icon */
     left: 50%;
     margin-left: -60px; /* Center the tooltip horizontally */
+    cursor: pointer;
 }
 
 /* Show the tooltip on hover */
@@ -267,6 +268,24 @@ thead th.asc span.icon-arrow{
 
 thead th.active,tbody td.active {
     color: #ff0000;
+}
+
+
+.add-button {
+    padding: 0.7rem 1.4rem;
+    background: red; /* or use var(--main-color) if you have defined it */
+    color: black; /* or use var(--text-color) if you have defined it */
+    font-weight: bold; /* Change font-weight to bold */
+    font-family: 'Poppins', sans-serif;
+    border: 2px solid transparent;
+    border-radius: 0.5rem; /* Adjust the border-radius if you want rounded corners */
+    transition: background 0.3s ease;
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+.add-button:hover {
+    background: #fa1216; /* Adjust the hover color if needed */
+    border-color: red; /* This will show the border on hover */
 }
 
 
