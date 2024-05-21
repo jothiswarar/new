@@ -48,28 +48,63 @@ app.get('/movies', (req, res) => {
 app.post('/add', (req, res) => {
     const { copy_id } = req.body;
 
-    // Perform any necessary validation on the copy_id
+    // Ensure copy_id is provided
+    if (!copy_id) {
+        return res.status(400).json({ error: 'copy_id is required' });
+    }
 
-    // Insert the copy_id into the cart table (or perform any other action as needed)
-   pool.query("insert into cart (no_of_items,cust_id) values ")
-    pool.query("update copy set cart_id =(?),cust_id=(?) where copy_id =(?);", [cust_id,cust_id,copy_id], (error, results) => {
-        if (error) {
-            console.error('Error adding movie to cart:', error);
+    // Print values to debug
+    console.log('Adding movie to cart:', { cust_id, copy_id });
+
+    // Fetch current state for debugging
+    pool.query("SELECT * FROM copy WHERE copy_id = ?", [copy_id], (fetchError, fetchResults) => {
+        if (fetchError) {
+            console.error('Error fetching copy:', fetchError);
             return res.status(500).json({ error: 'Internal server error' });
         }
 
-        // Send a success response
-        pool.query("update cart set no_of_items=no+of_itenms+1 where cust_id=?", [cust_id],(err,result) => {
-            if(err){
-                console.error(err);
+        // Check if the copy exists
+        if (fetchResults.length === 0) {
+            return res.status(404).json({ error: 'No copy found with the provided id' });
+        }
+
+        console.log('Current copy state:', fetchResults);
+
+        // Proceed with updating the copy table
+        pool.query("UPDATE copy SET cart_id = ? WHERE copy_id = ?", [cust_id, copy_id], (updateError, updateResults) => {
+            if (updateError) {
+                console.error('Error adding movie to cart:', updateError);
+                return res.status(500).json({ error: 'Internal server error' });
             }
-            else{
+
+            // Check if any rows were affected
+            if (updateResults.affectedRows === 0) {
+                return res.status(404).json({ error: 'No copy found with the provided id' });
+            }
+
+            console.log('Copy update results:', updateResults);
+
+            // Update the cart table
+            pool.query("UPDATE cart SET no_of_items = no_of_items + 1 WHERE cust_id = ?", [cust_id], (cartError, cartResults) => {
+                if (cartError) {
+                    console.error('Error updating cart items:', cartError);
+                    return res.status(500).json({ error: 'Internal server error' });
+                }
+
+                // Check if any rows were affected
+                if (cartResults.affectedRows === 0) {
+                    return res.status(404).json({ error: 'No cart found for the customer' });
+                }
+
+                console.log('Cart update results:', cartResults);
+
+                // Send a success response
                 res.status(200).json({ message: 'Movie added to cart successfully' });
-            }
+            });
         });
-        
     });
 });
+
 
 app.post('/submit', (req, res) => {
     const { Name, email, phone, password, confirmpassword, membershipType, duration, vipType, institutionName, familyMembers } = req.body;
@@ -142,19 +177,19 @@ app.post('/submit', (req, res) => {
                         res.redirect('/index.html'); // Redirect to index.html after successful sign up
                     });
                 } else {
-                    res.redirect('/index.html'); // Redirect to index.html after successful sign up
+                    pool.query("call EnsureInitializedCart();",(err,result) => {
+                        if(err){
+        
+                            console.error(err);
+                        }
+                        else{
+                            console.log("cart inserted");
+                            res.redirect('/index.html'); 
+                        }
+                    });
                 }
             });
-            pool.query('insert into cart(cart_id,no_of_items,cust_id) values(?,0,?)',[cust_id,cust_id],(err,result) => {
-                if(err){
-
-                    console.error(err);
-                }
-                else{
-                    console.log("cart inserted");
-                    res.redirect('/index.html'); 
-                }
-            });
+            
         });
     });
 });

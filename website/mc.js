@@ -1,120 +1,192 @@
-document.addEventListener('DOMContentLoaded', () => {
-  fetch('http://localhost:3000/cart')
+document.addEventListener('DOMContentLoaded', function () {
+  const pdf_btn = document.querySelector('#toPDF');
+  const customers_table = document.querySelector('#customers_table .table__body table');
+
+  // Function to fetch data and populate table
+  function fetchDataAndPopulateTable() {
+    fetch('http://localhost:3000/cart')
       .then(response => response.json())
       .then(data => {
-          const tableBody = document.getElementById('tableBody');
-          data.forEach(item => {
-              const row = tableBody.insertRow();
-              row.insertCell().textContent = item.copy_id;
-              row.insertCell().textContent = item.title;
-              row.insertCell().textContent = item.lang;
-              row.insertCell().textContent = item.availability;
-              row.insertCell().textContent = item.genre;
-              row.insertCell().textContent = item.price;
-              const cartCell = row.insertCell();
-              const addButton = document.createElement('button');
-              addButton.textContent = 'Add';
-              addButton.classList.add('add-button');
-              addButton.dataset.copyId = item.copy_id; // Store the copy_id in a data attribute
-              addButton.addEventListener('click', () => addToCart(item.copy_id));
-              cartCell.appendChild(addButton);
-          });
-
-          // Add search functionality after rows are added
-          addSearchFunctionality();
-          addSortingFunctionality();
+        populateTable(data);
+        addSearchFunctionality();
+        addSortingFunctionality();
       })
       .catch(error => console.error('Error fetching data:', error));
-});
-const search = document.querySelector('.input-group input'),
-    table_rows = document.querySelectorAll('tbody tr'),
-    table_headings = document.querySelectorAll('thead th');
+  }
 
-// 1. Searching for specific data of HTML table
-search.addEventListener('input', searchTable);
-
-function searchTable() {
-    table_rows.forEach((row, i) => {
-        let table_data = row.textContent.toLowerCase(),
-            search_data = search.value.toLowerCase();
-
-        row.classList.toggle('hide', table_data.indexOf(search_data) < 0);
-        row.style.setProperty('--delay', i / 25 + 's');
-    })
-
-    document.querySelectorAll('tbody tr:not(.hide)').forEach((visible_row, i) => {
-        visible_row.style.backgroundColor = (i % 2 == 0) ? 'transparent' : '#0000000b';
+  // Function to populate table
+  function populateTable(data) {
+    const tableBody = document.getElementById('tableBody');
+    data.forEach(item => {
+      const row = tableBody.insertRow();
+      row.insertCell().textContent = item.copy_id;
+      row.insertCell().textContent = item.title;
+      row.insertCell().textContent = item.lang;
+      row.insertCell().textContent = item.availability;
+      row.insertCell().textContent = item.genre;
+      row.insertCell().textContent = item.price;
+      const cartCell = row.insertCell();
+      const addButton = document.createElement('button');
+      addButton.textContent = 'purchase';
+      addButton.classList.add('purchase-btn');
+      addButton.dataset.copyId = item.copy_id;
+      addButton.addEventListener('click', () => purchase(item.copy_id));
+      cartCell.appendChild(addButton);
     });
-}
+  }
 
-// 2. Sorting | Ordering data of HTML table
+  // PDF export functionality
+  // PDF export functionality
+  // PDF export functionality
+  function toPDF() {
+    const new_window = window.open('', '_blank', 'width=800,height=600');
 
-table_headings.forEach((head, i) => {
-    let sort_asc = true;
-    head.onclick = () => {
-        table_headings.forEach(head => head.classList.remove('active'));
-        head.classList.add('active');
-
-        document.querySelectorAll('td').forEach(td => td.classList.remove('active'));
-        table_rows.forEach(row => {
-            row.querySelectorAll('td')[i].classList.add('active');
-        })
-
-        head.classList.toggle('asc', sort_asc);
-        sort_asc = head.classList.contains('asc') ? false : true;
-
-        sortTable(i, sort_asc);
-    }
-})
-
-
-function sortTable(column, sort_asc) {
-    [...table_rows].sort((a, b) => {
-        let first_row = a.querySelectorAll('td')[column].textContent.trim();
-        let second_row = b.querySelectorAll('td')[column].textContent.trim();
-
-        // If both values are numeric strings, parse them as numbers for comparison
-        if (!isNaN(first_row) && !isNaN(second_row)) {
-            first_row = parseFloat(first_row);
-            second_row = parseFloat(second_row);
-        } else {
-            // If one or both values are not numeric strings, compare them as strings
-            first_row = first_row.toLowerCase();
-            second_row = second_row.toLowerCase();
-        }
-
-        // Perform comparison based on sort order
-        return sort_asc ? (first_row > second_row ? 1 : -1) : (first_row < second_row ? 1 : -1);
-    })
-    .forEach(sorted_row => document.querySelector('tbody').appendChild(sorted_row));
-}
-
-
-// 3. Converting HTML table to PDF
-
-const pdf_btn = document.querySelector('#toPDF');
-const customers_table = document.querySelector('#customers_table');
-
-
-const toPDF = function (customers_table) {
     const html_code = `
     <!DOCTYPE html>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <main class="table" id="customers_table">${customers_table.innerHTML}</main>`;
+    <html>
+    <head>
+      <style>
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 8px;
+          text-align: left;
+          border-bottom: 1px solid #ddd;
+          white-space: nowrap; /* Prevent line breaks within cells */
+          overflow: hidden; /* Hide overflow */
+          text-overflow: ellipsis; /* Show ellipsis (...) for overflow text */
+        }
+      </style>
+    </head>
+    <body>
+      <table>
+        <thead>
+          ${customers_table.querySelector('thead').innerHTML}
+        </thead>
+        <tbody>
+          ${customers_table.querySelector('tbody').innerHTML}
+        </tbody>
+      </table>
+    </body>
+    </html>`;
 
-    const new_window = window.open();
-     new_window.document.write(html_code);
+    new_window.document.write(html_code);
 
     setTimeout(() => {
-        new_window.print();
-        new_window.close();
+      new_window.print();
+      new_window.close();
     }, 400);
+  }
+
+
+  // Event listener for the PDF button click
+  pdf_btn.addEventListener('click', toPDF);
+
+  // Initial fetch and populate table
+  fetchDataAndPopulateTable();
+});
+
+
+
+// Add search functionality
+function addSearchFunctionality() {
+  const search = document.querySelector('.input-group input');
+  const tableRows = document.querySelectorAll('tbody tr');
+
+  search.addEventListener('input', () => {
+    const searchData = search.value.toLowerCase();
+    tableRows.forEach((row, i) => {
+      const tableData = row.textContent.toLowerCase();
+      row.classList.toggle('hide', tableData.indexOf(searchData) < 0);
+      row.style.setProperty('--delay', i / 25 + 's');
+    });
+
+    document.querySelectorAll('tbody tr:not(.hide)').forEach((visibleRow, i) => {
+      visibleRow.style.backgroundColor = (i % 2 === 0) ? 'transparent' : '#0000000b';
+    });
+  });
 }
 
-pdf_btn.onclick = () => {
-    toPDF(customers_table);
+function addSortingFunctionality() {
+  const tableHeadings = document.querySelectorAll('thead th');
+  const tableRows = document.querySelectorAll('tbody tr');
+
+  tableHeadings.forEach((head, i) => {
+    let sortAsc = true;
+    head.addEventListener('click', () => {
+      tableHeadings.forEach(head => head.classList.remove('active'));
+      head.classList.add('active');
+
+      document.querySelectorAll('td').forEach(td => td.classList.remove('active'));
+      tableRows.forEach(row => {
+        row.querySelectorAll('td')[i].classList.add('active');
+      });
+
+      head.classList.toggle('asc', sortAsc);
+      sortAsc = !sortAsc;
+
+      sortTable(i, sortAsc);
+    });
+  });
 }
 
+function sortTable(column, sortAsc) {
+  const tableRows = document.querySelectorAll('tbody tr');
+  const sortedRows = [...tableRows].sort((a, b) => {
+    let firstRow = a.querySelectorAll('td')[column].textContent.trim();
+    let secondRow = b.querySelectorAll('td')[column].textContent.trim();
+
+    // If both values are numeric strings, parse them as numbers for comparison
+    if (!isNaN(firstRow) && !isNaN(secondRow)) {
+      firstRow = parseFloat(firstRow);
+      secondRow = parseFloat(secondRow);
+    } else {
+      // If one or both values are not numeric strings, compare them as strings
+      firstRow = firstRow.toLowerCase();
+      secondRow = secondRow.toLowerCase();
+    }
+
+    // Perform comparison based on sort order
+    return sortAsc ? (firstRow > secondRow ? 1 : -1) : (firstRow < secondRow ? 1 : -1);
+  });
+
+  sortedRows.forEach(sortedRow => document.querySelector('tbody').appendChild(sortedRow));
+}
+/*
+document.addEventListener('DOMContentLoaded', function() {
+  // Reference to the PDF button and the table
+  const pdf_btn = document.querySelector('#toPDF');
+  const customers_table = document.querySelector('#customers_table');
+
+  // Function to convert HTML table to PDF
+  const toPDF = function () {
+      const html_code = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <link rel="stylesheet" type="text/css" href="style.css">
+      </head>
+      <body>
+          <main class="table">${customers_table.innerHTML}</main>
+      </body>
+      </html>`;
+
+      const new_window = window.open('', '_blank', 'width=800,height=600');
+      new_window.document.write(html_code);
+
+      setTimeout(() => {
+          new_window.print();
+          new_window.close();
+      }, 400);
+  };
+
+  // Event listener for the PDF button click
+  pdf_btn.addEventListener('click', toPDF);
+});
+
+*/
 /*cart file */
 
 // OPEN & CLOSE CART
@@ -282,30 +354,30 @@ function CartBoxComponent(title, price, imgSrc) {
 const pool = require('./app');
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Execute query to retrieve data from copy table
-    pool.query('SELECT * FROM copy', (error, results, fields) => {
-        if (error) {
-            console.error('Error fetching data:', error);
-        } else {
-            // Get table body element
-            const tableBody = document.getElementById('tableBody');
-            // Loop through each item in the data
-            results.forEach(item => {
-                // Insert a row into the table
-                const row = tableBody.insertRow();
-                // Insert cells with data into the row
-                row.insertCell().textContent = item.copy_id;
-                row.insertCell().textContent = item.lang;
-                row.insertCell().textContent = item.price;
-                row.insertCell().textContent = item.availability;
-                row.insertCell().textContent = item.genre;
-                // Create a cell with a button to add to cart
-                const cartCell = row.insertCell();
-                const addButton = document.createElement('button');
-                addButton.textContent = 'Add';
-                addButton.classList.add('add-button');
-                cartCell.appendChild(addButton);
-            });
-        }
-    });
+  // Execute query to retrieve data from copy table
+  pool.query('SELECT * FROM copy', (error, results, fields) => {
+    if (error) {
+      console.error('Error fetching data:', error);
+    } else {
+      // Get table body element
+      const tableBody = document.getElementById('tableBody');
+      // Loop through each item in the data
+      results.forEach(item => {
+        // Insert a row into the table
+        const row = tableBody.insertRow();
+        // Insert cells with data into the row
+        row.insertCell().textContent = item.copy_id;
+        row.insertCell().textContent = item.lang;
+        row.insertCell().textContent = item.price;
+        row.insertCell().textContent = item.availability;
+        row.insertCell().textContent = item.genre;
+        // Create a cell with a button to add to cart
+        const cartCell = row.insertCell();
+        const addButton = document.createElement('button');
+        addButton.textContent = 'Add';
+        addButton.classList.add('add-button');
+        cartCell.appendChild(addButton);
+      });
+    }
+  });
 });
