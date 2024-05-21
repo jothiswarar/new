@@ -518,7 +518,22 @@ header{
     background: #fa1216; /* Adjust the hover color if needed */
     border-color: red; /* This will show the border on hover */
 }
+.remove-btn {
+    padding: 0.7rem 1.4rem;
+    background: red; /* or use var(--main-color) if you have defined it */
+    color: black; /* or use var(--text-color) if you have defined it */
+    font-weight: bold; /* Change font-weight to bold */
+    font-family: 'Poppins', sans-serif;
+    border: 2px solid transparent;
+    border-radius: 0.5rem; /* Adjust the border-radius if you want rounded corners */
+    transition: background 0.3s ease;
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
 
+.remove-btn:hover {
+    background: #fa1216; /* Adjust the hover color if needed */
+    border-color: red; /* This will show the border on hover */
+}
 /* SHOP SECTION  */
 .shop{
     margin-top: 2rem;

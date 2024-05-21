@@ -24,8 +24,20 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, "website", "index.html"));
 });
+app.get('/purchase', (req, res) => {
+            const copy=req.body;
+            pool.query("update copy set cust_id=? where copy_id in (?)",[copy],(err,res) =>{
+                if(err){
+                    alert(err);
+                    
+                }
+                else{
+                    
+                }
+            })
+});
 app.get('/cart', (req, res) => {
-    pool.query('SELECT * FROM copy c,movie m,genre ca where c.movie_id=m.movie_id and m.movie_id=ca.movie_id and c.cart_id= ?',[cust_id], (error, results) => {
+    pool.query('SELECT * FROM copy c,movie m,genre ca where c.movie_id=m.movie_id and m.movie_id=ca.movie_id and c.cart_id= ?', [cust_id], (error, results) => {
         if (error) {
             res.status(500).json({ error });
         } else {
@@ -57,54 +69,42 @@ app.post('/add', (req, res) => {
     console.log('Adding movie to cart:', { cust_id, copy_id });
 
     // Fetch current state for debugging
-    pool.query("SELECT * FROM copy WHERE copy_id = ?", [copy_id], (fetchError, fetchResults) => {
+    pool.query("call AddToCart(?,?)", [copy_id, cust_id], (fetchError, fetchResults) => {
         if (fetchError) {
             console.error('Error fetching copy:', fetchError);
             return res.status(500).json({ error: 'Internal server error' });
         }
-
-        // Check if the copy exists
-        if (fetchResults.length === 0) {
-            return res.status(404).json({ error: 'No copy found with the provided id' });
+        else {
+                console.log("added to cart");
+                return res.status(200).json({ message: 'Movie added to cart successfully' });
+                
         }
-
-        console.log('Current copy state:', fetchResults);
-
-        // Proceed with updating the copy table
-        pool.query("UPDATE copy SET cart_id = ? WHERE copy_id = ?", [cust_id, copy_id], (updateError, updateResults) => {
-            if (updateError) {
-                console.error('Error adding movie to cart:', updateError);
-                return res.status(500).json({ error: 'Internal server error' });
-            }
-
-            // Check if any rows were affected
-            if (updateResults.affectedRows === 0) {
-                return res.status(404).json({ error: 'No copy found with the provided id' });
-            }
-
-            console.log('Copy update results:', updateResults);
-
-            // Update the cart table
-            pool.query("UPDATE cart SET no_of_items = no_of_items + 1 WHERE cust_id = ?", [cust_id], (cartError, cartResults) => {
-                if (cartError) {
-                    console.error('Error updating cart items:', cartError);
-                    return res.status(500).json({ error: 'Internal server error' });
-                }
-
-                // Check if any rows were affected
-                if (cartResults.affectedRows === 0) {
-                    return res.status(404).json({ error: 'No cart found for the customer' });
-                }
-
-                console.log('Cart update results:', cartResults);
-
-                // Send a success response
-                res.status(200).json({ message: 'Movie added to cart successfully' });
-            });
-        });
     });
 });
+app.post('/remove', (req, res) => {
+    const { copy_id } = req.body;
 
+    // Ensure copy_id is provided
+    if (!copy_id) {
+        return res.status(400).json({ error: 'copy_id is required' });
+    }
+
+    // Print values to debug
+    console.log('removing movie from cart:', { cust_id, copy_id });
+
+    // Fetch current state for debugging
+    pool.query("call removecopyfromcart(?)", [copy_id], (fetchError, fetchResults) => {
+        if (fetchError) {
+            console.error('Error removing copy:', fetchError);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        else {
+                console.log("removed to cart");
+                return res.status(200).json({ message: 'Movie removed from cart successfully' });
+                
+        }
+    });
+});
 
 app.post('/submit', (req, res) => {
     const { Name, email, phone, password, confirmpassword, membershipType, duration, vipType, institutionName, familyMembers } = req.body;
@@ -132,9 +132,9 @@ app.post('/submit', (req, res) => {
                 return res.send('Error inserting customer data.');
             }
 
-           pool.query("select * from customer where name =?;",[Name],(err,result)=>{
-                    cust_id =result[0].cust_id;
-           });
+            pool.query("select * from customer where name =?;", [Name], (err, result) => {
+                cust_id = result[0].cust_id;
+            });
 
             // Insert into the membership_customer table based on the membership type
             const membershipSql = 'INSERT INTO membership_customer (cust_id, duration) VALUES (?, ?)';
@@ -177,19 +177,19 @@ app.post('/submit', (req, res) => {
                         res.redirect('/index.html'); // Redirect to index.html after successful sign up
                     });
                 } else {
-                    pool.query("call EnsureInitializedCart();",(err,result) => {
-                        if(err){
-        
+                    pool.query("call EnsureInitializedCart();", (err, result) => {
+                        if (err) {
+
                             console.error(err);
                         }
-                        else{
+                        else {
                             console.log("cart inserted");
-                            res.redirect('/index.html'); 
+                            res.redirect('/index.html');
                         }
                     });
                 }
             });
-            
+
         });
     });
 });
@@ -223,7 +223,7 @@ app.post('/signin', (req, res) => {
             }
 
             const user = results[0];
-            cust_id=user.id;
+            cust_id = user.id;
             // Check if password matches
             if (user.password !== password) {
                 return res.status(401).send('Incorrect password');
@@ -268,7 +268,7 @@ app.get('/membership', (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Membership details not found' });
         }
-        
+
 
         // Send membership details as JSON response
         res.json(results[0]);

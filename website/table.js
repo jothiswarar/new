@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 addButton.textContent = 'Add';
                 addButton.classList.add('add-button');
                 addButton.dataset.copyId = item.copy_id; // Store the copy_id in a data attribute
-                addButton.addEventListener('click', () => addToCart(item.copy_id));
+                addButton.addEventListener('click', () => addToCart(item.copy_id,addButton));
+
                 cartCell.appendChild(addButton);
             });
 
@@ -90,7 +91,7 @@ function sortTable(column, sortAsc) {
 
     sortedRows.forEach(sortedRow => document.querySelector('tbody').appendChild(sortedRow));
 }
-function addToCart(copyId) {
+function addToCart(copyId,add) {
     fetch('http://localhost:3000/add', {
         method: 'POST',
         headers: {
@@ -100,6 +101,7 @@ function addToCart(copyId) {
     })
     .then(response => {
         if (response.ok) {
+            add.textContent='Added';
             alert('Movie added to cart!');
         } else {
             alert('Failed to add movie to cart.');

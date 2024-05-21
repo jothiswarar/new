@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const pdf_btn = document.querySelector('#toPDF');
   const customers_table = document.querySelector('#customers_table .table__body table');
-
+  const cartCopyIds = [];
   // Function to fetch data and populate table
   function fetchDataAndPopulateTable() {
     fetch('http://localhost:3000/cart')
@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // Function to populate table
   function populateTable(data) {
     const tableBody = document.getElementById('tableBody');
+
+    // Clear the table body before repopulating it
+    tableBody.innerHTML = '';
+
+    let totalPrice = 0;
     data.forEach(item => {
       const row = tableBody.insertRow();
       row.insertCell().textContent = item.copy_id;
@@ -25,15 +30,25 @@ document.addEventListener('DOMContentLoaded', function () {
       row.insertCell().textContent = item.availability;
       row.insertCell().textContent = item.genre;
       row.insertCell().textContent = item.price;
+      totalPrice += parseFloat(item.price);
+
       const cartCell = row.insertCell();
       const addButton = document.createElement('button');
-      addButton.textContent = 'purchase';
-      addButton.classList.add('purchase-btn');
+      addButton.textContent = 'Remove';
+      addButton.classList.add('remove-btn');
       addButton.dataset.copyId = item.copy_id;
-      addButton.addEventListener('click', () => purchase(item.copy_id));
+      addButton.addEventListener('click', () => remove(item.copy_id, addButton));
       cartCell.appendChild(addButton);
+      cartCopyIds.push(item.copy_id);
+
     });
+    console.log('Total Price:', totalPrice);
+    const total = document.getElementById('totalPrice');
+    total.textContent = '$' + totalPrice.toFixed(2);
+    const pur = document.getElementById('purchasebutton');
+    pur.addEventListener('click', () => purchase(total));
   }
+
 
   // PDF export functionality
   // PDF export functionality
@@ -83,9 +98,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Event listener for the PDF button click
   pdf_btn.addEventListener('click', toPDF);
-
+  function purchase(totalPrice) {
+    fetch('http://localhost:3000/purchase', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ copy_ids: cartCopyIds, total_price: totalPrice }),
+    })
+      .then(response => {
+        if (response.ok) {
+          alert('Purchase successful!');
+          cartCopyIds.length = 0; // Clear the cartCopyIds list
+          fetchDataAndPopulateTable(); // Repopulate the table with an empty table body
+        } else {
+          alert('Failed to complete purchase.');
+        }
+      })
+      .catch(error => console.error('Error purchasing:', error));
+  }
   // Initial fetch and populate table
   fetchDataAndPopulateTable();
+  function remove(copyId, add) {
+    fetch('http://localhost:3000/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ copy_id: copyId }),
+    })
+      .then(response => {
+        if (response.ok) {
+          //add.textContent='removed';
+          alert('Movie removed from cart!');
+          fetchDataAndPopulateTable();
+
+        } else {
+          alert('Failed to add movie to cart.');
+        }
+      })
+      .catch(error => console.error('Error adding movie to cart:', error));
+  }
 });
 
 
@@ -154,230 +207,3 @@ function sortTable(column, sortAsc) {
 
   sortedRows.forEach(sortedRow => document.querySelector('tbody').appendChild(sortedRow));
 }
-/*
-document.addEventListener('DOMContentLoaded', function() {
-  // Reference to the PDF button and the table
-  const pdf_btn = document.querySelector('#toPDF');
-  const customers_table = document.querySelector('#customers_table');
-
-  // Function to convert HTML table to PDF
-  const toPDF = function () {
-      const html_code = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <link rel="stylesheet" type="text/css" href="style.css">
-      </head>
-      <body>
-          <main class="table">${customers_table.innerHTML}</main>
-      </body>
-      </html>`;
-
-      const new_window = window.open('', '_blank', 'width=800,height=600');
-      new_window.document.write(html_code);
-
-      setTimeout(() => {
-          new_window.print();
-          new_window.close();
-      }, 400);
-  };
-
-  // Event listener for the PDF button click
-  pdf_btn.addEventListener('click', toPDF);
-});
-
-*/
-/*cart file */
-
-// OPEN & CLOSE CART
-const cartIcon = document.querySelector("#cart-icon");
-const cart = document.querySelector(".cart");
-const closeCart = document.querySelector("#cart-close");
-
-cartIcon.addEventListener("click", () => {
-  cart.classList.add("active");
-});
-
-closeCart.addEventListener("click", () => {
-  cart.classList.remove("active");
-});
-
-// Start when the document is ready
-if (document.readyState == "loading") {
-  document.addEventListener("DOMContentLoaded", start);
-} else {
-  start();
-}
-
-// =============== START ====================
-function start() {
-  addEvents();
-}
-
-// ============= UPDATE & RERENDER ===========
-function update() {
-  addEvents();
-  updateTotal();
-}
-
-// =============== ADD EVENTS ===============
-function addEvents() {
-  // Remove items from cart
-  let cartRemove_btns = document.querySelectorAll(".cart-remove");
-  console.log(cartRemove_btns);
-  cartRemove_btns.forEach((btn) => {
-    btn.addEventListener("click", handle_removeCartItem);
-  });
-
-  // Change item quantity
-  let cartQuantity_inputs = document.querySelectorAll(".cart-quantity");
-  cartQuantity_inputs.forEach((input) => {
-    input.addEventListener("change", handle_changeItemQuantity);
-  });
-
-  // Add item to cart
-  let addCart_btns = document.querySelectorAll(".add-cart");
-  addCart_btns.forEach((btn) => {
-    btn.addEventListener("click", handle_addCartItem);
-  });
-
-  // Buy Order
-  const buy_btn = document.querySelector(".btn-buy");
-  buy_btn.addEventListener("click", handle_buyOrder);
-}
-
-// ============= HANDLE EVENTS FUNCTIONS =============
-let itemsAdded = [];
-
-function handle_addCartItem() {
-  let product = this.parentElement;
-  let title = product.querySelector(".product-title").innerHTML;
-  let price = product.querySelector(".product-price").innerHTML;
-  let imgSrc = product.querySelector(".product-img").src;
-  console.log(title, price, imgSrc);
-
-  let newToAdd = {
-    title,
-    price,
-    imgSrc,
-  };
-
-  // handle item is already exist
-  if (itemsAdded.find((el) => el.title == newToAdd.title)) {
-    alert("This Item Is Already Exist!");
-    return;
-  } else {
-    itemsAdded.push(newToAdd);
-  }
-
-  // Add product to cart
-  let cartBoxElement = CartBoxComponent(title, price, imgSrc);
-  let newNode = document.createElement("div");
-  newNode.innerHTML = cartBoxElement;
-  const cartContent = cart.querySelector(".cart-content");
-  cartContent.appendChild(newNode);
-
-  update();
-}
-
-function handle_removeCartItem() {
-  this.parentElement.remove();
-  itemsAdded = itemsAdded.filter(
-    (el) =>
-      el.title !=
-      this.parentElement.querySelector(".cart-product-title").innerHTML
-  );
-
-  update();
-}
-
-function handle_changeItemQuantity() {
-  if (isNaN(this.value) || this.value < 1) {
-    this.value = 1;
-  }
-  this.value = Math.floor(this.value); // to keep it integer
-
-  update();
-}
-
-function handle_buyOrder() {
-  if (itemsAdded.length <= 0) {
-    alert("There is No Order to Place Yet! \nPlease Make an Order first.");
-    return;
-  }
-  const cartContent = cart.querySelector(".cart-content");
-  cartContent.innerHTML = "";
-  alert("Your Order is Placed Successfully :)");
-  itemsAdded = [];
-
-  update();
-}
-
-// =========== UPDATE & RERENDER FUNCTIONS =========
-function updateTotal() {
-  let cartBoxes = document.querySelectorAll(".cart-box");
-  const totalElement = cart.querySelector(".total-price");
-  let total = 0;
-  cartBoxes.forEach((cartBox) => {
-    let priceElement = cartBox.querySelector(".cart-price");
-    let price = parseFloat(priceElement.innerHTML.replace("$", ""));
-    let quantity = cartBox.querySelector(".cart-quantity").value;
-    total += price * quantity;
-  });
-
-  // keep 2 digits after the decimal point
-  total = total.toFixed(2);
-  // or you can use also
-  // total = Math.round(total * 100) / 100;
-
-  totalElement.innerHTML = "$" + total;
-}
-
-// ============= HTML COMPONENTS =============
-function CartBoxComponent(title, price, imgSrc) {
-  return `
-    <div class="cart-box">
-        <img src=${imgSrc} alt="" class="cart-img">
-        <div class="detail-box">
-            <div class="cart-product-title">${title}</div>
-            <div class="cart-price">${price}</div>
-            <input type="number" value="1" class="cart-quantity">
-        </div>
-        <!-- REMOVE CART  -->
-        <i class='bx bxs-trash-alt cart-remove'></i>
-    </div>`;
-}
-
-/* cart edited by jo*/
-
-// Import connection pool
-const pool = require('./app');
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Execute query to retrieve data from copy table
-  pool.query('SELECT * FROM copy', (error, results, fields) => {
-    if (error) {
-      console.error('Error fetching data:', error);
-    } else {
-      // Get table body element
-      const tableBody = document.getElementById('tableBody');
-      // Loop through each item in the data
-      results.forEach(item => {
-        // Insert a row into the table
-        const row = tableBody.insertRow();
-        // Insert cells with data into the row
-        row.insertCell().textContent = item.copy_id;
-        row.insertCell().textContent = item.lang;
-        row.insertCell().textContent = item.price;
-        row.insertCell().textContent = item.availability;
-        row.insertCell().textContent = item.genre;
-        // Create a cell with a button to add to cart
-        const cartCell = row.insertCell();
-        const addButton = document.createElement('button');
-        addButton.textContent = 'Add';
-        addButton.classList.add('add-button');
-        cartCell.appendChild(addButton);
-      });
-    }
-  });
-});
